@@ -124,7 +124,7 @@ def sim(grid, carts, i):
         newCarts[next] = nextState
 
         if next in occupied:
-            print('COLLISION INTO OTHER PERSON', next)
+            print('COLLISION INTO OTHER CART', next)
             occupied.remove(next)
         else:
             occupied.add(next)
