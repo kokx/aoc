@@ -1,0 +1,37 @@
+#ip
+0:  r5 = r5 + 16    ; jump to 16+1 = 17 (label: init)
+1:  r1 = 1          ; begin: set r1 to 1
+2:  r4 = 1          ; loop (intil r4 == r2)
+3:  r3 = r1 * r4    ; r3 = r1 * r4 (r1 is 1, so r3 = r4)
+4:  r3 = r3 == r2   ; r3 = r3 == r2
+5:  r5 = r3 + r5    ; if (r3 == r2) skip next instruction
+6:  r5 = r5 + 1     ; skip next instruction
+7:  r0 = r1 + r0    ; add r1 (mostly 1) to r0
+8:  r4 = r4 + 1     ; add 1 to r4 
+9:  r3 = r4 == r2   ; r3 is 1 if r4 == r2
+10: r5 = r5 + r3    ; jump r5 + r3 (r3 usually is 0, so nothing)
+11: r5 = 2          ; jump back to label 'loop' (2
+12: r1 = r1 + 1     ; add 1 to r1
+13: r3 = r1 > r2
+14: r5 = r3 + r4    ; if r1 > r2, end program
+15: r5 = 1          ; set ir to 1
+16: r5 = r5 * r5    ; jump out of bounds (r5 = 16, so 16*16 is halt)
+17: r2 = r2 + 2     ; init (r2 = 2, mostly)
+18: r2 = r2 * r2    ; (r2 = 2 * 2, mostly)
+19: r2 = r5 * r2    ; r2 = r2 * 19
+20: r2 = r2 * 11    ; r2 = r2 * 
+21: r3 = r3 + 8
+22: r3 = r3 * r5
+23: r3 = r3 + 16
+24: r2 = r2 + r3
+25: r5 = r5 + r0    ; jump to r5 + r0
+26: r5 = 0          ; jump to 0+1 = 1 (label: begin)
+27: r3 = r5         ; r3 = 27
+28: r3 = r3 * r5    ; r3 = 27 * 28
+29: r3 = r5 + r3    ; r3 = 29 + (27 * 28)
+30: r3 = r5 * r3    ; r3 = 30 * (29 + (27 * 28))
+31: r3 = r3 * 14    ; r3 = (30 * (29 + (27 * 28))) * 14
+32: r3 = r3 * r5    ; r3 = ((30 * (29 + (27 * 28))) * 14) * 32
+33: r2 = r2 + r3
+34: r0 = 0
+35: r5 = 0         ; jump to 0+1 = 1 (label: begin)
