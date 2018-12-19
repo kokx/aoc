@@ -3,6 +3,7 @@ import sys
 #guess 221900
 #guess 223728 too high
 #guess 217064 too high
+#guess 215404
 
 grid = []
 
@@ -78,7 +79,7 @@ def gcount(grid):
     return trees * lumber
 
 gcounts = []
-for i in range(0, 1000):
+for i in range(0, 5000):
     grid = sim(grid)
 
     last = gcount(grid)
@@ -91,7 +92,8 @@ for i in range(0, 1000):
     #        if last == gcounts[j]:
     #            print(len(gcounts) - j - 1)
     #print(gcounts)
-    #printgrid(grid)
+    print(i)
+    printgrid(grid)
 
 # period = 28
 print(gcounts)
