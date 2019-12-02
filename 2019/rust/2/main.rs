@@ -71,10 +71,9 @@ fn run(line : String) {
 
     for noun in 0..100 {
         for verb in 0..100 {
-            if let Some(result) = exec(program.clone(), noun, verb) {
-                if  result == 19690720 {
-                    println!("Part two: {}", noun * 100 + verb);
-                }
+            match exec(program.clone(), noun, verb) {
+                Some(19690720) => println!("Part two: {}", noun * 100 + verb),
+                None | Some(_) => ()
             }
         }
     }
