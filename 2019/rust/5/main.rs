@@ -37,6 +37,17 @@ fn get_param(program : &Vec<i32>, mode : i32, loc : usize) -> Option<i32> {
     }
 }
 
+#[derive(Debug)]
+struct Param {
+    mode : i32,
+    value : i32,
+    addr : usize
+}
+
+impl Param {
+    fn create()
+}
+
 /// Execute an intcode program
 ///
 /// # Arguments
