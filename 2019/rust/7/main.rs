@@ -61,7 +61,7 @@ impl IntcodeComputer {
         };
     }
 
-    fn add_input(&mut self, value : i32) {
+    fn push_input(&mut self, value : i32) {
         self.input.push_back(value);
     }
 
@@ -192,8 +192,8 @@ fn run(line : String) {
                         let mut last_out = 0;
 
                         for mut comp in computers {
-                            comp.add_input(inputs.pop_front().unwrap());
-                            comp.add_input(last_out);
+                            comp.push_input(inputs.pop_front().unwrap());
+                            comp.push_input(last_out);
 
                             if let Some(IntcodeResult::Finished(output)) = comp.exec() {
                                 last_out = output[0];
@@ -235,7 +235,7 @@ fn run(line : String) {
                         let mut inputs : VecDeque<i32> = inputs.try_into().unwrap();
 
                         for comp in computers.get_mut() {
-                            comp.add_input(inputs.pop_front().unwrap());
+                            comp.push_input(inputs.pop_front().unwrap());
                         }
 
                         // execute all computers
@@ -246,7 +246,7 @@ fn run(line : String) {
 
                         while !finished {
                             for comp in computers.get_mut() {
-                                comp.add_input(last_out);
+                                comp.push_input(last_out);
 
                                 match comp.exec() {
                                     Some(IntcodeResult::Finished(output)) => {
