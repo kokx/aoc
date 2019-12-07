@@ -37,17 +37,6 @@ fn get_param(program : &Vec<i32>, mode : i32, loc : usize) -> Option<i32> {
     }
 }
 
-#[derive(Debug)]
-struct Param {
-    mode : i32,
-    value : i32,
-    addr : usize
-}
-
-impl Param {
-    fn create()
-}
-
 /// Execute an intcode program
 ///
 /// # Arguments
@@ -88,11 +77,6 @@ fn exec(mut program : Vec<i32>, input : Vec<i32>) -> Option<i32> {
                     _ => ()
                 }
 
-                if op == 3 {
-                } else if op == 4 {
-                    // read 1 parameter and output its value
-
-                }
                 ic = ic + 2;
             },
             5 | 6 => {
