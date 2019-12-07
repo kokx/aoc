@@ -39,6 +39,44 @@ fn get_param(program : &Vec<i32>, mode : i32, loc : usize) -> Option<i32> {
     }
 }
 
+// from https://rosettacode.org/wiki/Permutations#Rust
+
+pub fn permutations(size: usize) -> Permutations {
+    let new_size : i32 = size.try_into().unwrap();
+    Permutations {
+        idxs: (0..new_size).collect(),
+        swaps: vec![0; size],
+        i: 0
+    }
+}
+
+pub struct Permutations {
+    idxs: Vec<i32>,
+    swaps: Vec<i32>,
+    i: usize,
+}
+
+impl Iterator for Permutations {
+    type Item = Vec<i32>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i > 0 {
+            loop {
+                if self.i >= self.swaps.len() { return None; }
+                if self.swaps[self.i] < self.i.try_into().unwrap() { break; }
+                self.swaps[self.i] = 0;
+                self.i += 1;
+            }
+            let cur_swap : usize = self.swaps[self.i].try_into().unwrap();
+            self.idxs.swap(self.i, (self.i & 1) * cur_swap);
+            self.swaps[self.i] += 1;
+        }
+        self.i = 1;
+        Some(self.idxs.clone())
+    }
+}
+
+
 enum IntcodeResult {
     Finished(Vec<i32>),
     WaitInput(Vec<i32>)
@@ -54,11 +92,11 @@ struct IntcodeComputer {
 impl IntcodeComputer {
 
     fn new(prog : Vec<i32>) -> IntcodeComputer {
-        return IntcodeComputer {
+        IntcodeComputer {
             program: prog,
             input: VecDeque::new(),
             ic: 0
-        };
+        }
     }
 
     fn push_input(&mut self, value : i32) {
@@ -157,41 +195,27 @@ fn run(line : String) {
 
     let mut most = 0;
 
-    for a1 in 0..5 {
-        for a2 in 0..5 {
-            for a3 in 0..5 {
-                for a4 in 0..5 {
-                    for a5 in 0..5 {
-                        if a1 == a2 || a1 == a3 || a1 == a4 || a1 == a5 || a2 == a3 || a2 == a4 || a2 == a5 || a3 == a4 || a3 == a5 || a4 == a5 {
-                            continue;
-                        }
+    for inputs in permutations(5) {
+        let mut computers = vec![];
 
-                        let computers = vec![
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone())
-                        ];
+        // inject inputs into all computers
+        for input in inputs {
+            let mut computer = IntcodeComputer::new(program.clone());
+            computer.push_input(input);
+            computers.push(computer);
+        }
 
-                        let inputs = vec![a1, a2, a3, a4, a5];
-                        let mut inputs : VecDeque<i32> = inputs.try_into().unwrap();
-                        let mut last_out = 0;
+        let mut last_out = 0;
 
-                        for mut comp in computers {
-                            comp.push_input(inputs.pop_front().unwrap());
-                            comp.push_input(last_out);
+        for mut comp in computers {
+            comp.push_input(last_out);
 
-                            if let Some(IntcodeResult::Finished(output)) = comp.exec() {
-                                last_out = output[0];
-                            }
-                        }
-
-                        most = max(last_out, most);
-                    }
-                }
+            if let Some(IntcodeResult::Finished(output)) = comp.exec() {
+                last_out = output[0];
             }
         }
+
+        most = max(last_out, most);
     }
 
     // 75228 correct
@@ -200,60 +224,42 @@ fn run(line : String) {
     println!("Part two:");
     println!("---------");
 
-    for a1 in 5..10 {
-        for a2 in 5..10 {
-            for a3 in 5..10 {
-                for a4 in 5..10 {
-                    for a5 in 5..10 {
-                        if a1 == a2 || a1 == a3 || a1 == a4 || a1 == a5 || a2 == a3 || a2 == a4 || a2 == a5 || a3 == a4 || a3 == a5 || a4 == a5 {
-                            continue;
-                        }
+    most = 0;
 
-                        let mut computers = Cell::new(vec![
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone()),
-                            IntcodeComputer::new(program.clone())
-                        ]);
+    for inputs in permutations(5) {
+        let mut computers = Cell::new(vec![]);
 
-                        // inject inputs into all computers
-                        let inputs = vec![a1, a2, a3, a4, a5];
-                        let mut inputs : VecDeque<i32> = inputs.try_into().unwrap();
+        // inject inputs into all computers
+        let inputs : Vec<i32> = inputs.iter().map(|x| x + 5).collect();
 
-                        for comp in computers.get_mut() {
-                            comp.push_input(inputs.pop_front().unwrap());
-                        }
+        for input in inputs {
+            let mut computer = IntcodeComputer::new(program.clone());
+            computer.push_input(input);
+            computers.get_mut().push(computer);
+        }
 
-                        // execute all computers
-                        let mut last_out = 0;
-                        let mut finished = false;
+        // execute all computers
+        let mut last_out = 0;
+        let mut finished = false;
 
-                        //println!("----");
+        while !finished {
+            for comp in computers.get_mut() {
+                comp.push_input(last_out);
 
-                        while !finished {
-                            for comp in computers.get_mut() {
-                                comp.push_input(last_out);
-
-                                match comp.exec() {
-                                    Some(IntcodeResult::Finished(output)) => {
-                                        finished = true;
-                                        last_out = output[0];
-                                    },
-                                    Some(IntcodeResult::WaitInput(output)) => {
-                                        last_out = output[0];
-                                    },
-                                    _ => ()
-                                }
-                            }
-                            //println!("Loop {}", last_out);
-                        }
-
-                        most = max(last_out, most);
-                    }
+                match comp.exec() {
+                    Some(IntcodeResult::Finished(output)) => {
+                        finished = true;
+                        last_out = output[0];
+                    },
+                    Some(IntcodeResult::WaitInput(output)) => {
+                        last_out = output[0];
+                    },
+                    _ => ()
                 }
             }
         }
+
+        most = max(last_out, most);
     }
 
     println!("{}", most)
