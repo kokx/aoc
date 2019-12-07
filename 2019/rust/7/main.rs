@@ -147,19 +147,6 @@ impl IntcodeComputer {
     }
 }
 
-/// Execute an intcode program
-///
-/// # Arguments
-///
-/// * `program` - Vector of integers
-/// * `input` - Vector of input values, read from front to back
-///
-/// # Remarks
-///
-/// Executes an intcode program as specified at:
-/// - https://adventofcode.com/2019/day/5
-///
-
 fn run(line : String) {
     let program: Vec<i32> = line.split(",")
                                   .map(|s| s.parse().unwrap())
