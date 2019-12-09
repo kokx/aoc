@@ -119,7 +119,7 @@ impl IntcodeComputer {
                             output.push(a);
                         },
                         9 => {
-                            self.relative_base = self.relative_base + self.param_value(modes, 1)?;
+                            self.relative_base += self.param_value(modes, 1)?;
                             //println!("base: {}", self.relative_base);
                         }
                         _ => ()
