@@ -50,27 +50,37 @@ impl IntcodeComputer {
         self.input.push_back(value);
     }
 
-    fn get_param(&self, mode : i64, loc : usize) -> Option<i64> {
-        match mode {
-            1 => Some(self.program[loc]),
-            2 => {
-                let pos = self.program[loc];
-                let pos = self.relative_base + pos;
+    fn param_value(&self, modes : i64, offset : usize) -> Option<i64> {
+        match self.param(modes, offset) {
+            Some(pos) => Some(self.program[pos]),
+            _ => None
+        }
+    }
 
+    fn param(&self, modes : i64, offset : usize) -> Option<usize> {
+        let mode = mode(modes, offset - 1);
+        let loc = self.ic + offset;
+
+        match mode {
+            1 => Some(loc),
+            2 => {
+                let pos = self.relative_base + self.program[loc];
                 let pos : usize = pos.try_into().unwrap();
+
                 if pos > self.program.len() {
-                    return None;
+                    return None
                 }
 
-                Some(self.program[pos])
+                Some(pos)
             },
             0 => {
                 let pos : usize = self.program[loc].try_into().unwrap();
+
                 if pos > self.program.len() {
-                    return None;
+                    return None
                 }
 
-                Some(self.program[pos])
+                Some(pos)
             },
             _ => None
         }
@@ -95,14 +105,8 @@ impl IntcodeComputer {
 
                     match op {
                         3 => {
-                            let a : usize = match mode(modes, 0) {
-                                2 => {
-                                    let val = self.program[self.ic+1];
-                                    let fin = self.relative_base + val;
-                                    fin.try_into().unwrap()
-                                },
-                                _ => self.program[self.ic+1].try_into().unwrap()
-                            };
+                            let a : usize = self.param(modes, 1)?;
+
                             if let Some(value) = self.input.pop_front() {
                                 self.program[a] = value;
                             } else {
@@ -110,12 +114,12 @@ impl IntcodeComputer {
                             }
                         },
                         4 => {
-                            let a = self.get_param(mode(modes, 0), self.ic+1)?;
+                            let a = self.param_value(modes, 1)?;
                             //println!("out: {}", a);
                             output.push(a);
                         },
                         9 => {
-                            self.relative_base = self.relative_base + self.get_param(mode(modes, 0), self.ic+1)?;
+                            self.relative_base = self.relative_base + self.param_value(modes, 1)?;
                             //println!("base: {}", self.relative_base);
                         }
                         _ => ()
@@ -125,8 +129,8 @@ impl IntcodeComputer {
                 },
                 5 | 6 => {
                     // conditional jumps, with two parameters
-                    let a = self.get_param(mode(modes, 0), self.ic+1)?;
-                    let b = self.get_param(mode(modes, 1), self.ic+2)?;
+                    let a = self.param_value(modes, 1)?;
+                    let b = self.param_value(modes, 2)?;
 
                     // 5: jump if not zero
                     // 6: jump if zero
@@ -138,21 +142,10 @@ impl IntcodeComputer {
                 },
                 1 | 2 | 7 | 8 => {
                     // with three parameters
-                    let a = self.get_param(mode(modes, 0), self.ic+1)?;
-                    let b = self.get_param(mode(modes, 1), self.ic+2)?;
+                    let a = self.param_value(modes, 1)?;
+                    let b = self.param_value(modes, 2)?;
 
-                    let out : usize = match mode(modes, 2) {
-                        2 => {
-                            let val = self.program[self.ic+3];
-                            let fin = self.relative_base + val;
-                            fin.try_into().unwrap()
-                        }
-                        _ => self.program[self.ic+3].try_into().unwrap()
-                    };
-
-                    if out >= self.program.len() {
-                        return None;
-                    }
+                    let out = self.param(modes, 3)?;
 
                     self.program[out] = match op {
                         // +
