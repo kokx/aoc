@@ -40,12 +40,11 @@ for asteroid in asteroids:
 print(most)
 
 startangle = int(math.atan2(0, -1) * 1000000)
-print(startangle)
 
 # do a new reachability search, obtain lists this time
 reachable = {}
 for test in asteroids:
-    if test == asteroid:
+    if test == best:
         continue
     res = math.atan2(test[0] - best[0], test[1] - best[1])
     res = int(res * 1000000)
@@ -53,21 +52,16 @@ for test in asteroids:
         reachable[res] = []
     reachable[res].append(test)
 
-#print(reachable)
-
 curangle = startangle
 keys = reversed(sorted(reachable.keys()))
 
-print(reachable[curangle])
-print(best)
 
 for i in range(200):
     #print(curangle, keys)
     if i == 199:
         # 200-th angle
-        print(i+1, reachable[curangle])
+        print(reachable[curangle][0][0] * 100 + reachable[curangle][0][1], reachable[curangle])
         # TODO: find closest
-    print(i+1, reachable[curangle])
 
     # find next curangle
     nx = curangle
