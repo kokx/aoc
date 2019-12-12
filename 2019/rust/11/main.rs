@@ -3,8 +3,6 @@ use std::convert::TryInto;
 use std::collections::VecDeque;
 use std::collections::HashSet;
 
-// guess: 47780111 (too high)
-
 fn main() {
     let stdin = io::stdin();
 
@@ -183,6 +181,9 @@ fn run(line : String) {
     for _ in 0..10000 {
         program.push(0);
     }
+
+    // no need to modify the program again
+    let program = program;
 
     println!("Part one:");
     println!("---------");
