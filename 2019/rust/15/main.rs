@@ -27,7 +27,7 @@ enum IntcodeResult {
     WaitInput(Vec<i64>)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct IntcodeComputer {
     program : Vec<i64>,
     input : VecDeque<i64>,
@@ -176,224 +176,187 @@ impl IntcodeComputer {
     }
 }
 
-fn dfs(grid :Vec<Vec<i64>>, pos : (usize, usize)) -> Vec<i64> {
-    // find series of directions to nearest empty (0) square
-    let mut stack = Vec::new();
-    let mut path = Vec::new();
+#[derive(Debug, Clone)]
+struct MazeDiscovery {
+    computer : IntcodeComputer,
+    grid : Vec<Vec<i64>>,
+    distgrid : Vec<Vec<i64>>,
+    x : i64,
+    y : i64,
+    dist : i64,
+    oxygenx: i64,
+    oxygeny: i64
+}
 
-    let px : i64 = pos.0.try_into().unwrap();
-    let py : i64 = pos.1.try_into().unwrap();
-    let pos = (px, py);
+impl MazeDiscovery {
 
-    let dirs : Vec<(i64, i64)> = vec![(0, 1), (0, -1), (1, 0), (-1, 0)];
-    let dirsinv : Vec<(i64, i64)> = vec![(0, 0), (0, -1), (0, 1), (-1, 0), (1, 0)];
-    let mut states = grid.clone();
-    let mut prev = grid.clone();
+    fn new(computer : IntcodeComputer) -> MazeDiscovery {
+        let mut grid : Vec<Vec<i64>> = Vec::new();
+        let mut dist : Vec<Vec<i64>> = Vec::new();
+        for _ in 0..50 {
+            grid.push(vec![-1 ; 50]);
+            dist.push(vec![999999 ; 50]);
+        }
 
-    stack.push(pos);
+        MazeDiscovery {
+            computer: computer,
+            grid: grid,
+            distgrid: dist,
+            x: 25,
+            y: 25,
+            dist: 0,
+            oxygenx: 0,
+            oxygeny: 0
+        }
+    }
 
+    fn search(&mut self) {
+        for i in 1..5 {
+            self.mov(i);
+        }
+    }
 
-    loop {
-        match stack.pop() {
-            Some(loc) => {
-                let ty : usize = loc.1.try_into().unwrap();
-                let tx : usize = loc.0.try_into().unwrap();
-                states[ty][tx] = 20;
-                match grid[ty][tx] {
+    fn mov(&mut self, dir : i64) {
+        let dirs : Vec<(i64, i64)> = vec![(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)];
+        let dirinv : Vec<i64> = vec![0, 2, 1, 4, 3];
+
+        let diru : usize = dir.try_into().unwrap();
+        let dird = dirs[diru];
+        let dy : usize = (self.y + dird.1).try_into().unwrap();
+        let dx : usize = (self.x + dird.0).try_into().unwrap();
+
+        // check if direction is already checked
+        if self.grid[dy][dx] != -1 {
+            return;
+        }
+
+        self.computer.push_input(dir);
+
+        match self.computer.exec() {
+            Some(IntcodeResult::WaitInput(output)) => {
+                if output.is_empty() {
+                    panic!("Got no output from intcode machine");
+                }
+
+                match output[0] {
                     0 => {
-                        // unexplored, what we want to find
-                        let mut prev_loc = loc;
-                        while prev_loc != pos {
-                            let py : usize = prev_loc.1.try_into().unwrap();
-                            let px : usize = prev_loc.0.try_into().unwrap();
-                            let mov = (prev[py][px] - 10) + 1;
-                            path.push(mov);
-
-                            let mov : usize = mov.try_into().unwrap();
-
-                            let oy = prev_loc.1 + dirsinv[mov].1;
-                            let ox = prev_loc.0 + dirsinv[mov].0;
-                            prev_loc = (ox, oy);
-                        }
-                        break;
+                        // wall
+                        self.grid[dy][dx] = 0;
                     },
                     1 | 2 => {
-                        // we can move here
-                        for i in 0..4 {
-                            let dir = dirs[i];
-                            let oy = loc.1 + dir.1;
-                            let dy : usize = oy.try_into().unwrap();
-                            let ox = loc.0 + dir.0;
-                            let dx : usize = ox.try_into().unwrap();
+                        // 1 = empty
+                        self.grid[dy][dx] = output[0];
 
-                            // already checked or in queue
-                            if states[dy][dx] >= 10 {
-                                continue;
-                            }
-                            stack.push((ox, oy));
-                            states[dy][dx] = 10;
-                            prev[dy][dx] = (10 + i).try_into().unwrap();
+                        // move
+                        self.y = self.y + dird.1;
+                        self.x = self.x + dird.0;
+                        self.dist = self.dist + 1;
+
+                        if output[0] == 2 {
+                            println!("Part one: {}", self.dist);
+                            self.oxygenx = self.x;
+                            self.oxygeny = self.y;
                         }
+
+                        self.search();
+
+                        // move back
+                        self.computer.push_input(dirinv[diru]);
+                        self.computer.exec();
+
+                        self.y = self.y - dird.1;
+                        self.x = self.x - dird.0;
+                        self.dist = self.dist - 1;
                     },
-                    // nothing to see here, move along
-                    5 => continue,
-                    _ => continue
+                    _ => panic!("Wrong output from machine: {}", output[0])
                 }
             },
-            None => break
-        }
+            _ => panic!("Machine should never finish or fail")
+        };
     }
 
-    path.reverse();
-
-    return path;
-}
-
-fn bfs(grid : Vec<Vec<i64>>, pos : (usize, usize)) -> i64 {
-    let px : i64 = pos.0.try_into().unwrap();
-    let py : i64 = pos.1.try_into().unwrap();
-    let pos = (px, py);
-
-
-    let mut states = grid.clone();
-    let mut prev : Vec<Vec<i64>> = Vec::new();
-    for _ in 0..grid.len() {
-        let mut temp = Vec::new();
-        for _ in 0..grid[0].len() {
-            temp.push(99999999);
+    fn bfs(&self) -> i64 {
+        let mut dist : Vec<Vec<i64>> = Vec::new();
+        for _ in 0..50 {
+            dist.push(vec![9999999 ; 50]);
         }
-        prev.push(temp);
-    }
 
-    let px : usize = pos.0.try_into().unwrap();
-    let py : usize = pos.1.try_into().unwrap();
+        let dirs : Vec<(i64, i64)> = vec![(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)];
 
-    let mut q = VecDeque::new();
+        let x = self.oxygenx;
+        let y = self.oxygeny;
+        let tx : usize = x.try_into().unwrap();
+        let ty : usize = y.try_into().unwrap();
 
-    q.push_back(pos);
-    prev[py][px] = 0;
+        dist[ty][tx] = 0;
 
-    let dirs : Vec<(i64, i64)> = vec![(0, 1), (0, -1), (1, 0), (-1, 0)];
+        let mut q = VecDeque::new();
 
-    loop {
-        match q.pop_front() {
-            Some(loc) => {
-                let ty : usize = loc.1.try_into().unwrap();
-                let tx : usize = loc.0.try_into().unwrap();
-                states[ty][tx] = 20;
-                match grid[ty][tx] {
-                    1 => {
-                        // we can move here
-                        for i in 0..4 {
-                            let dir = dirs[i];
+        q.push_back((x, y));
 
-                            let oy = loc.1 + dir.1;
-                            let dy : usize = oy.try_into().unwrap();
-                            let ox = loc.0 + dir.0;
-                            let dx : usize = ox.try_into().unwrap();
+        while !q.is_empty() {
+            match q.pop_front() {
+                Some((nx, ny)) => {
+                    let tnx : usize = nx.try_into().unwrap();
+                    let tny : usize = ny.try_into().unwrap();
 
-                            if states[dy][dx] < 10 {
-                                q.push_back((ox, oy));
+                    match self.grid[tny][tnx] {
+                        1 | 2 => {
+                            for i in 1..5 {
+                                let fx = nx + dirs[i].0;
+                                let fy = ny + dirs[i].1;
+                                let tfx : usize = fx.try_into().unwrap();
+                                let tfy : usize = fy.try_into().unwrap();
+
+                                if dist[tfy][tfx] > 1000 {
+                                    q.push_back((fx, fy));
+                                }
+                                if dist[tny][tnx] + 1 < dist[tfy][tfx] {
+                                    dist[tfy][tfx] = dist[tny][tnx] + 1;
+                                }
                             }
-                            states[dy][dx] = 10;
-                            if prev[ty][tx] + 1 < prev[dy][dx] {
-                                prev[dy][dx] = prev[ty][tx] + 1;
-                            }
-                        }
-                    },
-                    2 => {
-                        return prev[ty][tx];
-                    },
-                    // cannot do anything here
-                    5 => (),
-                    _ => {
-                        println!("Should not find this! {}", grid[ty][tx]);
-                        break;
-                    },
-                }
-            },
-            None => break
-        }
-    }
-
-    return 999999999;
-}
-
-fn bfs_fill(grid : Vec<Vec<i64>>, pos : (usize, usize)) -> i64 {
-    let px : i64 = pos.0.try_into().unwrap();
-    let py : i64 = pos.1.try_into().unwrap();
-    let pos = (px, py);
-
-
-    let mut states = grid.clone();
-    let mut prev : Vec<Vec<i64>> = Vec::new();
-    for _ in 0..grid.len() {
-        let mut temp = Vec::new();
-        for _ in 0..grid[0].len() {
-            temp.push(99999999);
-        }
-        prev.push(temp);
-    }
-
-    let px : usize = pos.0.try_into().unwrap();
-    let py : usize = pos.1.try_into().unwrap();
-
-    let mut q = VecDeque::new();
-
-    q.push_back(pos);
-    prev[py][px] = 0;
-
-    let dirs : Vec<(i64, i64)> = vec![(0, 1), (0, -1), (1, 0), (-1, 0)];
-
-    loop {
-        match q.pop_front() {
-            Some(loc) => {
-                let ty : usize = loc.1.try_into().unwrap();
-                let tx : usize = loc.0.try_into().unwrap();
-                states[ty][tx] = 20;
-                match grid[ty][tx] {
-                    1 | 2 => {
-                        // we can move here
-                        for i in 0..4 {
-                            let dir = dirs[i];
-
-                            let oy = loc.1 + dir.1;
-                            let dy : usize = oy.try_into().unwrap();
-                            let ox = loc.0 + dir.0;
-                            let dx : usize = ox.try_into().unwrap();
-
-                            if states[dy][dx] < 10 {
-                                q.push_back((ox, oy));
-                            }
-                            states[dy][dx] = 10;
-                            if prev[ty][tx] + 1 < prev[dy][dx] {
-                                prev[dy][dx] = prev[ty][tx] + 1;
-                            }
-                        }
-                    },
-                    // cannot do anything here
-                    5 => (),
-                    _ => {
-                        println!("Should not find this! {}", grid[ty][tx]);
-                        break;
-                    },
-                }
-            },
-            None => break
-        }
-    }
-
-    let mut most = 0;
-
-    for i in 0..prev.len() {
-        for j in 0..prev[0].len() {
-            if prev[i][j] < 1000 && (grid[i][j] == 1 || grid[i][j] == 2) {
-                most = max(most, prev[i][j])
+                        },
+                        _ => ()
+                    }
+                },
+                _ => panic!("Really should not happen")
             }
         }
+
+        let mut most = 0;
+        for y in 0..50 {
+            for x in 0..50 {
+                if self.grid[y][x] == 1 || self.grid[y][x] == 2 {
+                    most = max(most, dist[y][x]);
+                }
+            }
+        }
+
+        most
     }
 
-    return most;
+    fn print(&self) {
+        let mut printgrid = self.grid.clone();
+        let cx : usize = self.x.try_into().unwrap();
+        let cy : usize = self.y.try_into().unwrap();
+        printgrid[cy][cx] = 7;
+
+        for y in 0..50 {
+            let mut outline = "".to_owned();
+            for x in 0..50 {
+                let pos = match printgrid[y][x] {
+                    -1 => " ", // print . to show non-discovered areas
+                    0  => "#",
+                    1  => " ",
+                    2  => "@",
+                    7  => "D",
+                    _  => "?"
+                };
+                outline.push_str(&pos[..]);
+            }
+            println!("{}", outline);
+        }
+    }
 }
 
 fn run(line : String) {
@@ -401,126 +364,10 @@ fn run(line : String) {
                                   .map(|s| s.parse().unwrap())
                                   .collect();
 
-    // no need to modify the program again
-    let program = program;
+    let mut maze = MazeDiscovery::new(IntcodeComputer::new(program));
 
-    println!("Part one:");
-    println!("---------");
+    maze.search();
+    println!("Part two: {}", maze.bfs());
 
-    let mut computer = IntcodeComputer::new(program);
-
-    // initialize grid
-    let mut grid : Vec<Vec<i64>> = Vec::new();
-    for _ in 0..50 {
-        let mut temp = Vec::new();
-        for _ in 0..50 {
-            temp.push(0);
-        }
-        grid.push(temp);
-    }
-
-    let mut cx = 25;
-    let mut cy = 25;
-
-    grid[cy][cx] = 1;
-
-    // try to go top first
-    let mut last_input = 1;
-    computer.push_input(last_input);
-
-    let mut q = VecDeque::new();
-
-    let dirs : Vec<(i64, i64)> = vec![(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)];
-
-    let mut found_loc = (0, 0);
-
-    loop {
-        let ty : i64 = cy.try_into().unwrap();
-        let tx : i64 = cx.try_into().unwrap();
-        match computer.exec() {
-            Some(IntcodeResult::WaitInput(output)) => {
-                if output.is_empty() {
-                    println!("No output");
-                }
-                let last : usize = last_input.try_into().unwrap();
-                let dir = dirs[last];
-                let dy = ty + dir.1;
-                let dy : usize = dy.try_into().unwrap();
-                let dx = tx + dir.0;
-                let dx : usize = dx.try_into().unwrap();
-
-                match output[0] {
-                    0 => {
-                        // 5 = wall
-                        grid[dy][dx] = 5;
-
-                    },
-                    1 => {
-                        // 1 = empty
-                        grid[dy][dx] = 1;
-
-                        // move droid
-                        cx = dx;
-                        cy = dy;
-
-                    },
-                    2 => {
-                        println!("Found it! ({}, {})", tx, ty);
-                        grid[dy][dx] = 2;
-                        found_loc = (dx, dy);
-
-                        // move droid
-                        cx = dx;
-                        cy = dy;
-                    },
-                    _ => println!("Error! Wrong output!")
-                };
-
-                if q.is_empty() {
-                    for m in dfs(grid.clone(), (cx, cy)) {
-                        q.push_back(m);
-                    }
-                    if q.is_empty() {
-                        break;
-                    }
-                }
-                last_input = q.pop_front().unwrap();
-                computer.push_input(last_input);
-            },
-            Some(IntcodeResult::Finished(output)) => {
-                println!("fin: {:?}", output);
-            },
-            None => println!("Failed!")
-        };
-    }
-
-    let dy : usize = cy.try_into().unwrap();
-    let dx : usize = cx.try_into().unwrap();
-
-    let mut printgrid = grid.clone();
-
-    printgrid[dy][dx] = 7;
-
-    // print grid
-    for y in 0..50 {
-        let mut outline = "".to_owned();
-        for x in 0..50 {
-            let pos = match printgrid[y][x] {
-                0 => " ",
-                1 => ".",
-                2 => "@",
-                5 => "#",
-                7 => "D",
-                _ => "?",
-            };
-
-            outline.push_str(&pos[..]);
-        }
-        println!("{}", outline);
-    }
-
-    println!("BFS: {}", bfs(grid.clone(), (25, 25)));
-    // 351 high
-    // apparently, off by one
-    println!("BFS_fill: {}", bfs_fill(grid.clone(), found_loc));
+    //maze.print();
 }
