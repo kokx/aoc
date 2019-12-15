@@ -37,7 +37,11 @@ struct IntcodeComputer {
 
 impl IntcodeComputer {
 
-    fn new(prog : Vec<i64>) -> IntcodeComputer {
+    fn new(mut prog : Vec<i64>) -> IntcodeComputer {
+        for _ in 0..10000 {
+            prog.push(0);
+        }
+
         IntcodeComputer {
             program: prog,
             input: VecDeque::new(),
@@ -396,12 +400,6 @@ fn run(line : String) {
     let program: Vec<i64> = line.split(",")
                                   .map(|s| s.parse().unwrap())
                                   .collect();
-
-    // increase program size
-    let mut program = program;
-    for _ in 0..10000 {
-        program.push(0);
-    }
 
     // no need to modify the program again
     let program = program;
