@@ -383,7 +383,7 @@ fn bfs_fill(grid : Vec<Vec<i64>>, pos : (usize, usize)) -> i64 {
 
     for i in 0..prev.len() {
         for j in 0..prev[0].len() {
-            if prev[i][j] < 1000 {
+            if prev[i][j] < 1000 && (grid[i][j] == 1 || grid[i][j] == 2) {
                 most = max(most, prev[i][j])
             }
         }
@@ -524,5 +524,5 @@ fn run(line : String) {
     println!("BFS: {}", bfs(grid.clone(), (25, 25)));
     // 351 high
     // apparently, off by one
-    println!("BFS_fill: {}", bfs_fill(grid.clone(), found_loc) - 1);
+    println!("BFS_fill: {}", bfs_fill(grid.clone(), found_loc));
 }
