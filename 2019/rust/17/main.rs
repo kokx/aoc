@@ -315,39 +315,28 @@ fn run(line : String) {
     computer.push_input(n);
     computer.push_input(nl);
 
-    let mut grid : Vec<Vec<char>> = Vec::new();
-
     match computer.exec() {
         Some(IntcodeResult::Finished(output)) => {
-            println!("{:?}", output);
-
-            let mut line = Vec::new();
+            // print the last integer in the output, which is the answer
+            let outputlast : i32 = output.len().try_into().unwrap();
+            let outputlast : usize = (outputlast - 1).try_into().unwrap();
+            let outputlast = output[outputlast];
 
             for ic in output {
                 //println!("{}", ic);
                 let c : u32 = ic.try_into().unwrap();
                 let c : char = c.try_into().unwrap();
 
-                if c == '\n' {
-                    grid.push(line);
-                    line = Vec::new();
-                } else {
-                    line.push(c);
-                }
+                print!("{}", c);
             }
+
+            println!("Answer: {}", outputlast);
         },
         Some(IntcodeResult::WaitInput(output)) => {
             println!("Not finished {:?}", output);
         },
         _ => panic!("Something is wrong.")
     };
-
-    for y in 0..grid.len() {
-        for x in 0..grid[y].len() {
-            print!("{}", grid[y][x]);
-        }
-        println!();
-    }
 
     // 1436 low
 }
