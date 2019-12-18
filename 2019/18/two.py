@@ -48,7 +48,7 @@ while len(queue) > 0:
     seen[key] = dist
 
     # do keep some progress if slow
-    if len(seen) % 1000000 == 0:
+    if len(seen) % 100000 == 0:
         print(len(seen))
 
 
