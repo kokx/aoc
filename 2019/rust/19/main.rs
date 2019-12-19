@@ -217,10 +217,9 @@ fn run(line : String) {
     println!("{}", total);
 
     let mut lo = 100;
-    let mut hi = 10000;
+    let mut hi = 1000;
 
     let mut lasty = 0;
-    let mut lastx = 0;
 
     let mut correctans = 0;
 
@@ -230,7 +229,20 @@ fn run(line : String) {
         let mut firstx = 0;
 
         // for line y = cur, find the first x where value = 1
-        for x in 0..10000 {
+        for x in (0..10000).step_by(50) {
+            let val = get_value(program.clone(), x, cur);
+
+            if val == 1 {
+                firstx = x;
+                break;
+            }
+        }
+        if firstx == 0 {
+            // too low
+            lo = cur;
+            continue;
+        }
+        for x in (firstx - 50)..(firstx) {
             let val = get_value(program.clone(), x, cur);
 
             if val == 1 {
@@ -250,7 +262,6 @@ fn run(line : String) {
         }
 
         if cur == lasty {
-            lastx = firstx;
             break;
         }
         lasty = cur;
