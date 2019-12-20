@@ -96,13 +96,5 @@ start = (0, start[0], start[1])
 target = portals['ZZ'][0]
 target = (0, target[0], target[1])
 
-#path = nx.dijkstra_path(G, start, target)
-
-#for l, x, y in path:
-#    if (x, y) in invportals:
-#        print((l, x, y), '--', invportals[(x, y)])
-#    else:
-#        print((l, x, y))
-
 
 print(nx.dijkstra_path_length(G, start, target))
