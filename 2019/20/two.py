@@ -67,7 +67,7 @@ def is_outer(loc):
     return False
 
 # add 100 levels
-for level in range(100):
+for level in range(32):
     for a, b, w in edges:
         G.add_edge((level, a[0], a[1]), (level, b[0], b[1]), weight=w)
 
