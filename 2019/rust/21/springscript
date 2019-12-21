@@ -1,0 +1,18 @@
+Part one:
+
+OR A J
+AND B J
+AND C J
+NOT J J
+AND D J
+WALK
+
+
+Part two:
+NOT H J
+OR C J
+AND B J
+AND A J
+NOT J J
+AND D J
+RUN
