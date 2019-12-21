@@ -213,14 +213,17 @@ fn run(line : String) {
 
     let mut correctans = 0;
 
+    let mut drones_killed = 0;
+
     loop {
         let cur = (hi + lo) / 2;
 
         let mut firstx = 0;
 
         // for line y = cur, find the first x where value = 1
-        for x in (0..10000).step_by(50) {
+        for x in (0..10000).step_by(75) {
             let val = get_value(computer.clone(), x, cur);
+            drones_killed += 1;
 
             if val == 1 {
                 firstx = x;
@@ -232,8 +235,9 @@ fn run(line : String) {
             lo = cur;
             continue;
         }
-        for x in (firstx - 50)..(firstx) {
+        for x in (firstx - 75)..(firstx) {
             let val = get_value(computer.clone(), x, cur);
+            drones_killed += 1;
 
             if val == 1 {
                 firstx = x;
@@ -243,6 +247,7 @@ fn run(line : String) {
 
         // check y - 100 and x + 100, if it is also 1, we have a match
         let val = get_value(computer.clone(), firstx + 99, cur - 99);
+        drones_killed += 1;
 
         if val == 1 {
             hi = cur;
@@ -258,4 +263,5 @@ fn run(line : String) {
     }
 
     println!("{}", correctans);
+    println!("Drones killed: {}", drones_killed);
 }
