@@ -177,7 +177,7 @@ impl IntcodeComputer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct NetworkMessage {
     address: usize,
     x: i64,
@@ -256,15 +256,51 @@ fn run(line : String) {
         .map(|address| NetworkComputer::new(address, program.clone()))
         .collect::<Vec<_>>();
 
-    'main: loop {
+    'one: loop {
         for i in 0..computers.len() {
             for message in computers[i].step() {
                 if message.address == 255 {
                     println!("{}", message.y);
-                    break 'main;
+                    break 'one;
                 }
                 computers[message.address].send(message);
             }
+        }
+    }
+
+    let mut computers = (0..50)
+        .map(|address| NetworkComputer::new(address, program.clone()))
+        .collect::<Vec<_>>();
+
+    let mut last_nat = NetworkMessage::new(0, -1, -1);
+    let mut num_waiting = 0;
+    let mut lasty = -1;
+
+    'two: loop {
+        let mut all_waiting = true;
+        for i in 0..computers.len() {
+            all_waiting = all_waiting && computers[i].waiting;
+            for message in computers[i].step() {
+                if message.address == 255 {
+                    last_nat = message;
+                } else {
+                    computers[message.address].send(message);
+                }
+            }
+        }
+
+        if all_waiting {
+            num_waiting +=1;
+        } else {
+            num_waiting = 0;
+        }
+        if num_waiting == 2 {
+            if last_nat.y == lasty {
+                println!("{}", last_nat.y);
+                break 'two;
+            }
+            lasty = last_nat.y;
+            computers[0].send(last_nat.clone());
         }
     }
 }
