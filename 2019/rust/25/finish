@@ -1,0 +1,28 @@
+Items needed:
+- ornament
+- sand
+- shell
+- astrolabe
+
+(you can simply take this file as input, non-sequence input gets ignored)
+
+sequence:
+
+north
+take sand
+north
+north
+take astrolabe
+south
+south
+south
+west
+north
+take shell
+south
+south
+west
+take ornament
+west
+south
+south
